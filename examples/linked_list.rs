@@ -1,39 +1,81 @@
+use std::{cell::RefCell, rc::Rc};
+
+type NodeType = Option<Rc<RefCell<Node>>>;
 
 
 struct Node{
-    value:i32,
-    next:Option<Box<Node>>
+    item:i32,
+    prev:NodeType,
+    next:NodeType
 }
 impl Node {
-    fn append(&mut self, elem:i32){
-        match self.next {
-            Some(ref mut next)=>{
-                next.append(elem);
-            },
-            None=>{
-                let node=Node{
-                    value:elem,
-                    next:None,
-                };
-                self.next=Some(Box::new(node));
-            }
+    fn new(item:i32)->Self{
+        Self{
+            item,
+            prev:None,
+            next:None
         }
     }
-    fn list(&self){
-        print!("{}",self.value);
-        match self.next {
-            Some(ref next)=>next.list(),
-            None=>{}
+}
+pub struct DoubleLinkedList{
+    head:NodeType,
+    tail:NodeType,
+}
+impl DoubleLinkedList {
+    fn new()->Self{
+        Self { head: None, tail: None }
+    }
+    fn push_back(&mut self, item:i32){
+        let node = Rc::new(RefCell::new(Node::new(item)));
+
+        if let Some(tail)=self.tail.take(){
+            tail.borrow_mut().next = Some(Rc::clone(&node));
+            node.borrow_mut().prev = Some(tail);
+            self.tail = Some(node);
+        }else{
+            self.head = Some(Rc::clone(&node));
+            self.tail = Some(node);
+        }
+
+    }
+    fn push_front(&mut self, item:i32){
+        let node =Rc::new(RefCell::new(Node::new(item)));
+
+        if let Some(head)=self.head.take(){
+            head.borrow_mut().prev = Some(Rc::clone(&node));
+            node.borrow_mut().next = Some(head);
+            self.head = Some(node);
+        }else{
+            self.head=Some(Rc::clone(&node));
+            self.tail = Some(node);
+        }
+    }
+    fn print_all(&mut self){
+        let mut current = match &self.head{
+            Some(n)=>n.clone(),
+            None=>return
+        };
+        loop{
+            let t = current.clone();
+            println!("{}",t.borrow().item);
+            current=match &(t.borrow().next) {
+                Some(n)=>n,
+                None=>break
+            }.clone();
+            
         }
     }
 }
 fn main(){
-    let mut head = Node{
-        value:1,
-        next:None
-    };
-    for i in 2..10{
-        head.append(i);
-    }
-    head.list();
+    let mut list = DoubleLinkedList::new();
+    println!("append tail");
+    list.push_back(1);
+    list.push_back(2);
+    list.push_back(3);
+
+    list.print_all();
+
+    println!("append head");
+    list.push_front(11);
+    list.print_all()
 }

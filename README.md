@@ -18,4 +18,5 @@ cargo run --example <file_name>
 - tcp_client
 
 #### Linked List(Node)
+- tail_linked_list
 - linked_list
